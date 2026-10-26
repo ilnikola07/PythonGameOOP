@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.vscode/
+*.pyo
+*.pyd
+*.docx
+Python314/
