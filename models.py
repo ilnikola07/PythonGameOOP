@@ -30,6 +30,7 @@ class EntityInterface:
         self.color = color
         self.range = range_  # Дальность атаки/взаимодействия
         self.position = None
+        self.base = None
 
     def take_damage(self, amount):
         self.hp -= amount

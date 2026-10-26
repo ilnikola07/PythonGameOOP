@@ -28,6 +28,7 @@ class Base(EntityInterface):
             if not silent: print(f"Ошибка: класс {unit_type_name} не найден")
             return None
         new_unit = unit_class()
+        new_unit.base = self
         if self.gold < 10:
             if not silent: print("Недостаточно золота!")
             return None
@@ -51,7 +52,6 @@ class Base(EntityInterface):
 
     def get_status(self):
         lines = []
-        lines.append(f"=== База: {self.name} ===")
         lines.append(f"Золото: {self.gold}")
         lines.append(f"Войска: {len(self.my_units)}/{self.max_units}")
         lines.append("Состав:")

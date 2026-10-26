@@ -4,6 +4,7 @@ from models import Position
 from terrain import Grass, Water, Mountain
 from objects import HealthPotion, GoldCoin, Trap, Tree
 from bases import Base
+from units import Unit  # <-- ДОБАВИТЬ ЭТУ СТРОКУ
 
 RESET = "\033[0m"
 
@@ -26,10 +27,16 @@ class GameField:
     def _place_neutrals(self):
         neutrals = [HealthPotion(), GoldCoin(), Trap(), Tree()]
         for _ in range(10):
-            pos = Position(random.randint(0, self.width-1), random.randint(0, self.height-1))
-            if not self.get_entity_at(pos):
-                obj = random.choice(neutrals)
-                self.entities[pos] = obj
+            attempts = 0
+            while attempts < 50:
+                pos = Position(random.randint(0, self.width-1), random.randint(0, self.height-1))
+                terrain = self.grid[pos.y][pos.x]
+                # Спавним только на проходимом ландшафте и на пустой клетке
+                if terrain.passable and not self.get_entity_at(pos):
+                    obj = random.choice(neutrals)
+                    self.entities[pos] = obj
+                    break
+                attempts += 1
 
     def is_valid_pos(self, pos):
         return 0 <= pos.x < self.width and 0 <= pos.y < self.height
@@ -92,31 +99,30 @@ class GameField:
 
 
 def print_legend():
-    print("\n=== ЛЕГЕНДА ===")
+    print("\nЛЕГЕНДА ")
     print("Юниты:      W-Воин  G-Страж  A-Стрелок  S-Снайпер  R-Всадник  L-Улан")
-    print("База:       B-Цитадель")
     print("Объекты:    +-Аптечка  $-Золото  x-Ловушка  T-Дерево")
     print("Ландшафт:   .-Трава  ~-Вода  ^-Горы")
-    print("===============\n")
+    print(" \n")
 
 
 def main():
     width, height = 15, 15
     field = GameField(width, height)
     
-    player_base = Base("Цитадель", 1)
+    player_base = Base(" ", 1)
     base_pos = Position(1, 1)
     field.add_entity(player_base, base_pos)
     
     # СТАРТОВЫЙ ЮНИТ УБРАН. ИГРА НАЧИНАЕТСЯ С ПУСТОЙ БАЗОЙ.
     
-    print("=== Консольная стратегия ===\n")
+    print("Консольная стратегия \n")
     
     while True:
         field.draw()
         print_legend()
         
-        print("=== ГЛАВНОЕ МЕНЮ ===")
+        print("ГЛАВНОЕ МЕНЮ ")
         print("1 - Управление базой")
         print("2 - Управление юнитом")
         print("3 - Состояние базы")
@@ -125,7 +131,7 @@ def main():
         choice = input("\nВыбор: ").strip()
         
         if choice == "1":
-            print("\n--- Управление базой ---")
+            print("\nУправление базой ")
             print("1 - Создать юнита (10 золота)")
             print("2 - Назад")
             sub = input("Выбор: ").strip()
@@ -159,7 +165,7 @@ def main():
                 print("\nНет юнитов! Создайте их через меню базы.")
                 continue
                 
-            print("\n--- Выберите юнита ---")
+            print("\nВыберите юнита ")
             for i, u in enumerate(units_list):
                 print(f"{i+1}. {u} на {u.position}")
             
@@ -169,7 +175,7 @@ def main():
                     active_unit = units_list[u_idx]
                     
                     while True:
-                        print(f"\n--- Управление: {active_unit.name} ---")
+                        print(f"\nУправление: {active_unit.name} ")
                         print("1 - Переместить")
                         print("2 - Атаковать")
                         print("3 - Состояние")
@@ -192,27 +198,40 @@ def main():
                                 break
                                 
                         elif act == "2":
-                            # Поиск целей в радиусе
+                            # Поиск целей в радиусе: вражеские юниты + деревья
                             targets = []
                             for e_pos, e in field.entities.items():
-                                if e != active_unit and isinstance(e, Unit):
-                                    if active_unit.position.distance_to(e_pos) <= active_unit.range:
-                                        targets.append((e_pos, e))
+                                if e == active_unit:
+                                    continue
+                                if active_unit.position.distance_to(e_pos) <= active_unit.range:
+                                    if isinstance(e, Unit):
+                                        targets.append((e_pos, e, "unit"))
+                                    elif isinstance(e, Tree):
+                                        targets.append((e_pos, e, "tree"))
                             
                             if not targets:
                                 print("Нет целей в радиусе атаки!")
                             else:
                                 print("Доступные цели:")
-                                for i, (pos, t) in enumerate(targets):
-                                    print(f"{i+1}. {t} на {pos}")
+                                for i, (pos, t, ttype) in enumerate(targets):
+                                    if ttype == "unit":
+                                        print(f"{i+1}. {t} на {pos} [Враг]")
+                                    else:
+                                        print(f"{i+1}. {t.name} на {pos} [Дерево]")
                                 try:
                                     t_idx = int(input("Цель: ")) - 1
-                                    target_pos, target = targets[t_idx]
-                                    is_dead = active_unit - target  # Перегрузка оператора "-"
-                                    if is_dead:
-                                        player_base.remove_unit(target)
+                                    target_pos, target, ttype = targets[t_idx]
+                                    if ttype == "unit":
+                                        is_dead = active_unit - target
+                                        if is_dead:
+                                            player_base.remove_unit(target)
+                                            field.remove_entity(target_pos)
+                                    else:
+                                        # Срубаем дерево
                                         field.remove_entity(target_pos)
-                                except: print("Ошибка выбора цели.")
+                                        print(f"\033[32m{active_unit.name} срубил дерево!\033[0m")
+                                except (ValueError, IndexError):
+                                    print("Ошибка выбора цели.")
                                 
                         elif act == "3":
                             print(f"\nИмя: {active_unit.name}")

@@ -14,8 +14,14 @@ class HealthPotion(NeutralObjectInterface):
 class GoldCoin(NeutralObjectInterface):
     def __init__(self):
         super().__init__("Золото", "$", "\033[33m")
+    
     def __add__(self, unit):
-        print(f"\033[33m{unit.name} собрал золото!\033[0m")
+        amount = 10  # сколько золота даёт монета
+        if unit.base is not None:
+            unit.base.gold += amount
+            print(f"\033[33m{unit.name} собрал золото! +{amount} в казну (всего: {unit.base.gold})\033[0m")
+        else:
+            print(f"\033[33m{unit.name} собрал золото!\033[0m")
         return unit
 
 class Trap(NeutralObjectInterface):
