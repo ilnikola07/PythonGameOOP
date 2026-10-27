@@ -4,7 +4,7 @@ from models import Position
 from terrain import Grass, Water, Mountain
 from objects import HealthPotion, GoldCoin, Trap, Tree
 from bases import Base
-from units import Unit  # <-- ДОБАВИТЬ ЭТУ СТРОКУ
+from units import Unit  
 
 RESET = "\033[0m"
 
@@ -138,12 +138,12 @@ def main():
             
             if sub == "1":
                 print("\nДоступные типы:")
-                print("1 - Воин (HP:50, Atk:10, Rng:1)")
-                print("2 - Страж (HP:45, Atk:12, Rng:1)")
-                print("3 - Стрелок (HP:30, Atk:15, Rng:2)")
-                print("4 - Снайпер (HP:35, Atk:18, Rng:3)")
-                print("5 - Всадник (HP:60, Atk:8, Rng:1)")
-                print("6 - Улан (HP:40, Atk:14, Rng:1)")
+                print("1 - Воин (Здоровье:50, Урон:10, Дальноость:1)")
+                print("2 - Страж (Здоровье:45, Урон:12, Дальноость:1)")
+                print("3 - Стрелок (Здоровье:30, Урон:15, Дальноость:2)")
+                print("4 - Снайпер (Здоровье:35, Урон:18, Дальноость:3)")
+                print("5 - Всадник (Здоровье:60, Урон:8, Дальноость:1)")
+                print("6 - Улан (Здоровье:40, Урон:14, Дальноость:1)")
                 
                 t_map = {"1":"Warrior","2":"Guard","3":"Archer","4":"Marksman","5":"Rider","6":"Lancer"}
                 t_choice = input("Тип: ").strip()
@@ -175,6 +175,9 @@ def main():
                     active_unit = units_list[u_idx]
                     
                     while True:
+                        field.draw()
+                        print_legend()
+
                         print(f"\nУправление: {active_unit.name} ")
                         print("1 - Переместить")
                         print("2 - Атаковать")
@@ -235,7 +238,7 @@ def main():
                                 
                         elif act == "3":
                             print(f"\nИмя: {active_unit.name}")
-                            print(f"HP: {active_unit.hp}/{active_unit.max_hp}")
+                            print(f"Здоровье: {active_unit.hp}/{active_unit.max_hp}")
                             print(f"Атака: {active_unit.attack}")
                             print(f"Дальность: {active_unit.range}")
                             print(f"Позиция: {active_unit.position}")
